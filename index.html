@@ -1,0 +1,1406 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard Analisis Risiko Kredit | Quantro Risk</title>
+  <!-- Google Fonts: Plus Jakarta Sans -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- ApexCharts CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+          },
+          colors: {
+            brand: {
+              orange: '#f97316',
+              amber: '#f59e0b',
+              gold: '#fbbf24',
+              dark: '#121318',
+              sidebar: '#16171d',
+              sidehover: '#1e2029',
+              body: '#f4f5f8',
+              card: '#ffffff',
+              border: '#e5e7eb'
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    /* Custom Scrollbar for Main Content */
+    main::-webkit-scrollbar,
+    aside::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    main::-webkit-scrollbar-track {
+      background: #f1f5f9;
+    }
+    main::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 4px;
+    }
+    main::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
+    aside::-webkit-scrollbar-track {
+      background: #16171d;
+    }
+    aside::-webkit-scrollbar-thumb {
+      background: #2d313f;
+      border-radius: 4px;
+    }
+    .shadow-soft {
+      box-shadow: 0 4px 20px -2px rgba(17, 24, 39, 0.05), 0 2px 6px -1px rgba(17, 24, 39, 0.02);
+    }
+    .shadow-card-hover:hover {
+      box-shadow: 0 10px 25px -5px rgba(17, 24, 39, 0.08), 0 8px 10px -6px rgba(17, 24, 39, 0.03);
+    }
+    .apexcharts-tooltip {
+      background: #1e293b !important;
+      border: 1px solid #334155 !important;
+      color: #ffffff !important;
+      border-radius: 8px !important;
+      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3) !important;
+    }
+    .apexcharts-tooltip-title {
+      background: #0f172a !important;
+      border-bottom: 1px solid #334155 !important;
+      font-weight: 600 !important;
+    }
+  </style>
+</head>
+<body class="bg-brand-sidebar h-screen w-screen m-0 p-0 font-sans text-slate-800 antialiased overflow-hidden flex">
+
+  <!-- MAIN APP WINDOW (Frame persis referensi Quantro) -->
+  <div class="w-full h-full flex flex-col lg:flex-row overflow-hidden">
+
+    <!-- ========================================================================= -->
+    <!-- LEFT SIDEBAR (Dark Theme - Fixed, tidak ikut ter-scroll) -->
+    <!-- ========================================================================= -->
+    <aside class="w-full lg:w-64 bg-brand-sidebar p-5 flex flex-col justify-between shrink-0 border-b lg:border-b-0 lg:border-r border-slate-800/70 h-auto lg:h-full lg:overflow-y-auto">
+      
+      <!-- Top Brand & Navigation -->
+      <div class="space-y-6">
+        <!-- Brand Logo Quantro Risk -->
+        <div class="flex items-center gap-3 px-2 py-1">
+          <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-amber-500 to-orange-500 flex items-center justify-center shadow-lg shadow-orange-500/25 text-white">
+            <i data-lucide="shield-check" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h1 class="text-white font-bold text-lg tracking-tight flex items-center gap-1.5">
+              Credit <span class="text-[10px] uppercase font-bold text-amber-400 bg-amber-400/10 px-1.5 py-0.5 rounded tracking-wider">Risk</span>
+            </h1>
+            <p class="text-[10px] text-slate-400">Credit Risk Platform</p>
+          </div>
+        </div>
+
+        <!-- Navigation Menu -->
+        <nav class="space-y-1.5 text-xs font-medium">
+          <!-- Item 1: Dashboard (Active) -->
+          <button onclick="switchView('dashboard')" id="nav-btn-dashboard" class="nav-item w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl bg-amber-500/15 text-amber-400 font-semibold border border-amber-500/25 transition">
+            <i data-lucide="layout-dashboard" class="w-4 h-4"></i>
+            <span>Ringkasan & Dashboard</span>
+          </button>
+
+          <!-- Item 2: Analytics & EDA -->
+          <button onclick="switchView('analytics')" id="nav-btn-analytics" class="nav-item w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-slate-400 hover:text-slate-200 hover:bg-brand-sidehover transition">
+            <i data-lucide="pie-chart" class="w-4 h-4"></i>
+            <span>Eksplorasi Data (EDA)</span>
+          </button>
+
+          <!-- Item 3: Policy Simulator -->
+          <button onclick="switchView('policy')" id="nav-btn-policy" class="nav-item w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-slate-400 hover:text-slate-200 hover:bg-brand-sidehover transition">
+            <i data-lucide="sliders" class="w-4 h-4"></i>
+            <span>Simulator Kebijakan Risiko</span>
+          </button>
+
+          <!-- Item 4: Applicant Calculator -->
+          <button onclick="switchView('calculator')" id="nav-btn-calculator" class="nav-item w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-slate-400 hover:text-slate-200 hover:bg-brand-sidehover transition">
+            <i data-lucide="user-check" class="w-4 h-4"></i>
+            <span>Kalkulator Risiko Pemohon</span>
+          </button>
+
+          <!-- Item 5: Model Explainability -->
+          <button onclick="switchView('explainability')" id="nav-btn-explainability" class="nav-item w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-slate-400 hover:text-slate-200 hover:bg-brand-sidehover transition">
+            <i data-lucide="brain-circuit" class="w-4 h-4"></i>
+            <span>Benchmark Model & SHAP</span>
+          </button>
+
+          
+        </nav>
+      </div>
+
+      <!-- Bottom Card: Model Info -->
+      <div class="mt-6 pt-4 border-t border-slate-800/80 shrink-0">
+        <div class="rounded-2xl p-4 bg-gradient-to-b from-[#1c1e27] to-[#14151c] border border-slate-800 text-xs relative overflow-hidden">
+          <div class="w-8 h-8 rounded-lg bg-amber-500/20 text-amber-400 flex items-center justify-center mb-2.5">
+            <i data-lucide="crown" class="w-4 h-4"></i>
+          </div>
+          <h4 class="text-white font-bold text-xs">Model Produksi: XGBoost</h4>
+          <p class="text-[11px] text-slate-400 mt-1 leading-relaxed">
+            Dievaluasi pada 466.285 riwayat pinjaman. ROC-AUC <strong>0.7145</strong> &bull; PR-AUC <strong>0.4058</strong>.
+          </p>
+          
+        </div>
+      </div>
+
+    </aside>
+
+    <!-- ========================================================================= -->
+    <!-- RIGHT MAIN CONTENT (Hanya area ini yang ter-scroll secara mandiri) -->
+    <!-- ========================================================================= -->
+    <main class="flex-1 bg-brand-body flex flex-col h-full overflow-y-auto">
+
+      <!-- TOP HEADER (Search, Filter, Profile - Sticky at top of scroll) -->
+      <header class="bg-white/95 backdrop-blur-md px-6 py-4 border-b border-slate-200/80 flex flex-col sm:flex-row items-center justify-between gap-4 sticky top-0 z-30 shrink-0">
+        <!-- Search bar -->
+        <div class="relative w-full sm:w-96">
+          <i data-lucide="search" class="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"></i>
+          <input 
+            type="text" 
+            placeholder="Cari ID pinjaman, nama pemohon, grade, status..." 
+            class="w-full bg-[#f8fafc] border border-slate-200 rounded-xl pl-9 pr-8 py-2 text-xs text-slate-700 placeholder-slate-400 focus:outline-none focus:border-amber-500 focus:bg-white transition"
+          >
+          <i data-lucide="sliders-horizontal" class="w-3.5 h-3.5 absolute right-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
+        </div>
+
+        <!-- Right action icons & User Profile -->
+        <div class="flex items-center gap-4 w-full sm:w-auto justify-end">
+          <!-- Date Filter Pill -->
+          <div class="hidden sm:flex items-center gap-2 bg-[#f8fafc] border border-slate-200 px-3 py-1.5 rounded-xl text-xs font-semibold text-slate-600">
+            <i data-lucide="calendar" class="w-3.5 h-3.5 text-slate-400"></i>
+            <span>Dataset loan_data_2007_2014</span>
+          </div>
+
+          <!-- User Profile -->
+          <div class="flex items-center gap-3 pl-2 border-l border-slate-200">
+            <div class="w-9 h-9 rounded-full bg-slate-900 text-white flex items-center justify-center font-bold text-xs ring-2 ring-amber-500/20">
+              KNS
+            </div>
+            <div class="hidden md:block text-left">
+              <span class="text-xs font-bold text-slate-900 block leading-tight">Kartika Nur Savira</span>
+              <span class="text-[11px] text-slate-400 block leading-tight">researcher</span>
+            </div>
+          </div>
+        </div>
+      </header>
+
+
+      <!-- ===================================================================== -->
+      <!-- VIEW 1: MAIN DASHBOARD DENGAN PENJELASAN PROBLEM DI AWAL -->
+      <!-- ===================================================================== -->
+      <div id="view-dashboard" class="view-panel p-6 space-y-6">
+
+        <!-- Title & Action Button -->
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <h2 class="text-2xl font-extrabold text-slate-900 tracking-tight">Dashboard Analisis Risiko Kredit</h2>
+            <p class="text-xs text-slate-500 mt-1">Sistem Prediksi Risiko Kredit & Pengambilan Keputusan End-to-End (Siklus CRISP-DM).</p>
+          </div>
+          <button onclick="switchView('calculator')" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-slate-950 hover:bg-slate-800 text-white text-xs font-bold shadow-lg shadow-slate-950/20 transition">
+            <span class="text-amber-400 font-extrabold text-sm">+</span>
+            <span>+ Evaluasi Pemohon Baru</span>
+          </button>
+        </div>
+
+        <!-- ================================================================= -->
+        <!-- BANNER PENJELASAN MASALAH BISNIS & TUJUAN DI AWAL -->
+        <!-- ================================================================= -->
+        <div class="bg-gradient-to-r from-slate-900 via-slate-800 to-indigo-950 text-white rounded-2xl p-6 shadow-soft relative overflow-hidden">
+          <div class="relative z-10 space-y-3">
+            <div class="flex flex-wrap items-center gap-2">
+              <span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                Pemahaman Bisnis & Pernyataan Masalah
+              </span>
+              <span class="text-xs text-slate-400">Dataset: 466,285 Observations &bull; 75 Features</span>
+            </div>
+            
+            <h3 class="text-lg sm:text-xl font-extrabold text-white leading-snug">
+              Dilema Pemberian Pinjaman: Menyeimbangkan Kerugian Kredit Macet vs Pertumbuhan Bisnis
+            </h3>
+            
+            <p class="text-xs sm:text-sm text-slate-300 leading-relaxed max-w-4xl">
+              Institusi pemberi pinjaman menghadapi risiko finansial utama: <strong>gagal bayar (loan default)</strong>. Jika evaluasi terlalu longgar, kredit macet membengkak. Namun jika terlalu konservatif, perusahaan kehilangan peluang bisnis dari nasabah berkualitas. 
+              <br class="hidden sm:block">
+              <strong>Solusi AI:</strong> Model Machine Learning (XGBoost) memprediksi <strong>Probability of Default (PD)</strong> secara objektif sebelum pinjaman disetujui, menekan rasio kredit macet portofolio dari <strong>21.78% ke 14.07%</strong>, dengan tetap menjaga <strong>Tingkat Persetujuan (Approval Rate) sebesar 67.80%</strong>.
+            </p>
+
+            <!-- 3 Poin Ringkas -->
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2 text-xs">
+              <div class="p-2.5 rounded-xl bg-white/5 border border-white/10 flex items-center gap-2.5">
+                <span class="w-2 h-2 rounded-full bg-rose-400"></span>
+                <span><strong>Risiko Bisnis:</strong> 21.78% baseline tingkat default pada pengajuan awal.</span>
+              </div>
+              <div class="p-2.5 rounded-xl bg-white/5 border border-white/10 flex items-center gap-2.5">
+                <span class="w-2 h-2 rounded-full bg-amber-400"></span>
+                <span><strong>Solusi AI:</strong> Model XGBoost memprediksi probabilitas default sebelum pencairan.</span>
+              </div>
+              <div class="p-2.5 rounded-xl bg-white/5 border border-white/10 flex items-center gap-2.5">
+                <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+                <span><strong>Hasil Nyata:</strong> 56.18% pemohon berisiko tinggi berhasil disaring secara proaktif.</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Subtle icon background decoration -->
+          <div class="absolute right-2 -bottom-6 opacity-10 text-white pointer-events-none hidden md:block">
+            <i data-lucide="scale" class="w-60 h-60"></i>
+          </div>
+        </div>
+
+        <!-- ================================================================= -->
+        <!-- ROW 1: 4 METRIC CARDS WITH SPARKLINE (Quantro Style) -->
+        <!-- ================================================================= -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+          
+          <!-- Card 1: Total Volume -->
+          <div class="bg-white rounded-2xl p-5 shadow-soft border border-slate-100 flex flex-col justify-between shadow-card-hover transition">
+            <div class="flex items-center justify-between">
+              <div class="w-9 h-9 rounded-xl bg-amber-500/10 text-amber-500 flex items-center justify-center">
+                <i data-lucide="database" class="w-4 h-4"></i>
+              </div>
+              <span class="text-[10px] font-bold text-slate-400 bg-slate-50 px-2 py-0.5 rounded">Dataset</span>
+            </div>
+            
+            <div class="mt-4 flex items-end justify-between">
+              <div>
+                <span class="text-xs font-semibold text-slate-400 block">Total Pengajuan Pinjaman (Loans)</span>
+                <span class="text-2xl font-extrabold text-slate-900 tracking-tight mt-0.5 block">466,285</span>
+                <span class="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-600 mt-1">
+                  <i data-lucide="check-circle" class="w-3 h-3"></i> 0 Baris Duplikat
+                </span>
+              </div>
+              <div id="sparkline1" class="w-24 -mb-2"></div>
+            </div>
+          </div>
+
+          <!-- Card 2: Baseline Default Rate (Awal) -->
+          <div class="bg-white rounded-2xl p-5 shadow-soft border border-slate-100 flex flex-col justify-between shadow-card-hover transition">
+            <div class="flex items-center justify-between">
+              <div class="w-9 h-9 rounded-xl bg-rose-500/10 text-rose-500 flex items-center justify-center">
+                <i data-lucide="alert-triangle" class="w-4 h-4"></i>
+              </div>
+              <span class="text-[10px] font-bold text-rose-600 bg-rose-50 px-2 py-0.5 rounded">Pre-Model</span>
+            </div>
+            
+            <div class="mt-4 flex items-end justify-between">
+              <div>
+                <span class="text-xs font-semibold text-slate-400 block">Baseline Default Rate (Awal)</span>
+                <span class="text-2xl font-extrabold text-rose-600 tracking-tight mt-0.5 block">21.78%</span>
+                <span class="inline-flex items-center gap-1 text-[11px] font-bold text-slate-500 mt-1">
+                  Definisi risiko awal
+                </span>
+              </div>
+              <div id="sparkline2" class="w-24 -mb-2"></div>
+            </div>
+          </div>
+
+          <!-- Card 3: Tingkat Persetujuan (Approval Rate) -->
+          <div class="bg-white rounded-2xl p-5 shadow-soft border border-slate-100 flex flex-col justify-between shadow-card-hover transition">
+            <div class="flex items-center justify-between">
+              <div class="w-9 h-9 rounded-xl bg-blue-500/10 text-blue-500 flex items-center justify-center">
+                <i data-lucide="check" class="w-4 h-4"></i>
+              </div>
+              <span class="text-[10px] font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded">Policy</span>
+            </div>
+            
+            <div class="mt-4 flex items-end justify-between">
+              <div>
+                <span class="text-xs font-semibold text-slate-400 block">Tingkat Persetujuan (Approval Rate)</span>
+                <span class="text-2xl font-extrabold text-blue-600 tracking-tight mt-0.5 block">67.80%</span>
+                <span class="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-600 mt-1">
+                  @ Threshold Optimal 0.55
+                </span>
+              </div>
+              <div id="sparkline3" class="w-24 -mb-2"></div>
+            </div>
+          </div>
+
+          <!-- Card 4: Kredit Macet Tercegah (Recall) -->
+          <div class="bg-white rounded-2xl p-5 shadow-soft border border-slate-100 flex flex-col justify-between shadow-card-hover transition">
+            <div class="flex items-center justify-between">
+              <div class="w-9 h-9 rounded-xl bg-emerald-500/10 text-emerald-600 flex items-center justify-center">
+                <i data-lucide="shield" class="w-4 h-4"></i>
+              </div>
+              <span class="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded">Recall</span>
+            </div>
+            
+            <div class="mt-4 flex items-end justify-between">
+              <div>
+                <span class="text-xs font-semibold text-slate-400 block">Kredit Macet Tercegah (Recall)</span>
+                <span class="text-2xl font-extrabold text-emerald-600 tracking-tight mt-0.5 block">56.18%</span>
+                <span class="inline-flex items-center gap-1 text-[11px] font-bold text-slate-500 mt-1">
+                  Disaring sebelum pencairan dana
+                </span>
+              </div>
+              <div id="sparkline4" class="w-24 -mb-2"></div>
+            </div>
+          </div>
+
+        </div>
+
+
+        <!-- ================================================================= -->
+        <!-- ROW 2: DUA GRAFIK UTAMA (AREA SPLINE ORANYE & DONUT STATUS) -->
+        <!-- ================================================================= -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          
+          <!-- Area Chart (Risk Curve: Interest Rate vs Default Rate per Grade) -->
+          <div class="lg:col-span-8 bg-white rounded-2xl p-6 shadow-soft border border-slate-100 flex flex-col justify-between">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-3">
+              <div>
+                <h3 class="font-bold text-base text-slate-900 flex items-center gap-2">
+                  <i data-lucide="trending-up" class="w-4 h-4 text-amber-500"></i>
+                  Kurva Risiko & Suku Bunga berdasarkan Loan Grade (A &rarr; G)
+                </h3>
+                <p class="text-xs text-slate-400 mt-0.5">Grade pinjaman yang berisiko lebih tinggi dikenakan suku bunga lebih mahal, namun mengalami tingkat default yang jauh lebih besar.</p>
+              </div>
+
+              <!-- Switch pills persis referensi -->
+              <div class="flex items-center gap-2">
+                <div class="flex p-1 rounded-xl bg-slate-100 text-xs font-semibold">
+                  <button id="btnTrendBunga" onclick="toggleTrend('bunga')" class="px-3 py-1 rounded-lg bg-slate-900 text-white shadow-sm transition">Default Rate (%)</button>
+                  <button id="btnTrendDti" onclick="toggleTrend('dti')" class="px-3 py-1 rounded-lg text-slate-600 hover:text-slate-900 transition">DTI Ratio (%)</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Main Area Spline Chart Emas -->
+            <div id="overviewAreaChart" class="w-full"></div>
+            
+            <div class="text-[11px] text-slate-500 mt-2 pt-2 border-t border-slate-100 flex items-center justify-between">
+              <span><strong>Insight Dataset:</strong> Grade A memiliki tingkat default hanya 6.1%, sedangkan Grade G mencapai 48.9%.</span>
+              <span class="font-bold text-amber-600">Puncak Default: 48.9% @ Grade G</span>
+            </div>
+          </div>
+
+          <!-- Donut Chart (Distribusi Status Pinjaman (Loan Status)) -->
+          <div class="lg:col-span-4 bg-white rounded-2xl p-6 shadow-soft border border-slate-100 flex flex-col justify-between">
+            <div class="flex items-center justify-between mb-2">
+              <h3 class="font-bold text-base text-slate-900 flex items-center gap-2">
+                <i data-lucide="pie-chart" class="w-4 h-4 text-orange-500"></i>
+                Distribusi Status Pinjaman (Loan Status)
+              </h3>
+              <span class="text-xs text-slate-400 bg-slate-50 px-2 py-1 rounded-md border border-slate-200">Total: 466 Ribu</span>
+            </div>
+
+            <!-- Donut -->
+            <div id="categoryDonutChart" class="my-auto py-2"></div>
+
+            <!-- Custom Legend dengan istilah asli dataset -->
+            <div class="space-y-2 pt-2 border-t border-slate-100 text-xs font-medium">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                  <span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
+                  <span class="text-slate-700 font-semibold">Current (Pinjaman Aktif / Lancar)</span>
+                </div>
+                <span class="text-slate-900 font-bold">48.1% <span class="text-slate-400 font-normal">(224,226)</span></span>
+              </div>
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                  <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+                  <span class="text-slate-700 font-semibold">Fully Paid (Lunas Sempurna)</span>
+                </div>
+                <span class="text-slate-900 font-bold">39.6% <span class="text-slate-400 font-normal">(184,739)</span></span>
+              </div>
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                  <span class="w-2.5 h-2.5 rounded-full bg-slate-900"></span>
+                  <span class="text-slate-700 font-semibold">Charged Off (Macet Dihapusbukukan)</span>
+                </div>
+                <span class="text-slate-900 font-bold">9.1% <span class="text-slate-400 font-normal">(42,475)</span></span>
+              </div>
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                  <span class="w-2.5 h-2.5 rounded-full bg-rose-500"></span>
+                  <span class="text-slate-700 font-semibold">Late / Default (Menunggak / Macet)</span>
+                </div>
+                <span class="text-slate-900 font-bold">3.2% <span class="text-slate-400 font-normal">(14,845)</span></span>
+              </div>
+            </div>
+
+          </div>
+
+        </div>
+
+
+        <!-- ================================================================= -->
+        <!-- ROW 3: TIGA PANEL BAWAH (Quantro Style) -->
+        <!-- ================================================================= -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          
+          <!-- Panel 1: Rincian Risiko per Loan Grade (A - G) -->
+          <div class="lg:col-span-5 bg-white rounded-2xl p-5 shadow-soft border border-slate-100">
+            <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+              <h4 class="font-bold text-sm text-slate-900 flex items-center gap-2">
+                <i data-lucide="layers" class="w-4 h-4 text-amber-500"></i>
+                Rincian Risiko per Loan Grade (A - G)
+              </h4>
+              <button onclick="switchView('analytics')" class="text-xs font-semibold text-slate-500 hover:text-amber-600 flex items-center gap-1 transition">
+                Buka EDA &rarr;
+              </button>
+            </div>
+
+            <div class="overflow-x-auto mt-3">
+              <table class="w-full text-xs text-left">
+                <thead class="text-slate-400 font-semibold text-[11px] border-b border-slate-100">
+                  <tr>
+                    <th class="pb-2">Grade</th>
+                    <th class="pb-2 text-center">Volume</th>
+                    <th class="pb-2 text-center">Default Rate</th>
+                    <th class="pb-2 text-right">Tingkat Risiko</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 font-medium">
+                  <tr>
+                    <td class="py-2.5 flex items-center gap-2.5">
+                      <div class="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold text-xs">A</div>
+                      <span class="text-slate-800 font-bold">Grade A</span>
+                    </td>
+                    <td class="py-2.5 text-center text-slate-600">74,867</td>
+                    <td class="py-2.5 text-center font-bold text-emerald-600">6.1%</td>
+                    <td class="py-2.5 text-right"><span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-700">Prime</span></td>
+                  </tr>
+                  <tr>
+                    <td class="py-2.5 flex items-center gap-2.5">
+                      <div class="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold text-xs">B</div>
+                      <span class="text-slate-800 font-bold">Grade B</span>
+                    </td>
+                    <td class="py-2.5 text-center text-slate-600">136,929</td>
+                    <td class="py-2.5 text-center font-bold text-emerald-600">12.8%</td>
+                    <td class="py-2.5 text-right"><span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-700">Low Risk</span></td>
+                  </tr>
+                  <tr>
+                    <td class="py-2.5 flex items-center gap-2.5">
+                      <div class="w-7 h-7 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center font-bold text-xs">C</div>
+                      <span class="text-slate-800 font-bold">Grade C</span>
+                    </td>
+                    <td class="py-2.5 text-center text-slate-600">125,293</td>
+                    <td class="py-2.5 text-center font-bold text-amber-600">22.4%</td>
+                    <td class="py-2.5 text-right"><span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-700">Near-Prime</span></td>
+                  </tr>
+                  <tr>
+                    <td class="py-2.5 flex items-center gap-2.5">
+                      <div class="w-7 h-7 rounded-lg bg-orange-50 text-orange-600 flex items-center justify-center font-bold text-xs">D</div>
+                      <span class="text-slate-800 font-bold">Grade D</span>
+                    </td>
+                    <td class="py-2.5 text-center text-slate-600">76,888</td>
+                    <td class="py-2.5 text-center font-bold text-orange-600">30.5%</td>
+                    <td class="py-2.5 text-right"><span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-orange-100 text-orange-700">Moderate</span></td>
+                  </tr>
+                  <tr>
+                    <td class="py-2.5 flex items-center gap-2.5">
+                      <div class="w-7 h-7 rounded-lg bg-rose-50 text-rose-600 flex items-center justify-center font-bold text-xs">E</div>
+                      <span class="text-slate-800 font-bold">Grade E - G</span>
+                    </td>
+                    <td class="py-2.5 text-center text-slate-600">52,308</td>
+                    <td class="py-2.5 text-center font-bold text-rose-600">42.8%</td>
+                    <td class="py-2.5 text-right"><span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-100 text-rose-700">Subprime</span></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Panel 2: Recent Credit Decisions (Applicant Pipeline) -->
+          <div class="lg:col-span-4 bg-white rounded-2xl p-5 shadow-soft border border-slate-100">
+            <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+              <h4 class="font-bold text-sm text-slate-900 flex items-center gap-2">
+                <i data-lucide="clock" class="w-4 h-4 text-orange-500"></i>
+                Riwayat Evaluasi Pemohon Terbaru
+              </h4>
+              <button onclick="switchView('calculator')" class="text-xs font-semibold text-slate-500 hover:text-amber-600 flex items-center gap-1 transition">
+                Simulasi &rarr;
+              </button>
+            </div>
+
+            <!-- List items dengan avatar inisial persis referensi -->
+            <div class="space-y-3 mt-3">
+              <div class="flex items-center justify-between text-xs">
+                <div class="flex items-center gap-3">
+                  <div class="w-8 h-8 rounded-full bg-emerald-50 text-emerald-700 flex items-center justify-center font-bold text-xs">
+                    JD
+                  </div>
+                  <div>
+                    <span class="font-bold text-slate-900 block leading-tight">John Doe</span>
+                    <span class="text-[11px] text-slate-400 block">Grade A &bull; DTI 12% &bull; Term 36m</span>
+                  </div>
+                </div>
+                <div class="text-right">
+                  <span class="font-bold text-slate-900 block">$12,000</span>
+                  <span class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-emerald-50 text-emerald-600">Disetujui</span>
+                </div>
+              </div>
+
+              <div class="flex items-center justify-between text-xs">
+                <div class="flex items-center gap-3">
+                  <div class="w-8 h-8 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center font-bold text-xs">
+                    SM
+                  </div>
+                  <div>
+                    <span class="font-bold text-slate-900 block leading-tight">Sarah Miller</span>
+                    <span class="text-[11px] text-slate-400 block">Grade C &bull; DTI 18% &bull; Term 36m</span>
+                  </div>
+                </div>
+                <div class="text-right">
+                  <span class="font-bold text-slate-900 block">$8,500</span>
+                  <span class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-blue-50 text-blue-600">Tinjauan Manual</span>
+                </div>
+              </div>
+
+              <div class="flex items-center justify-between text-xs">
+                <div class="flex items-center gap-3">
+                  <div class="w-8 h-8 rounded-full bg-emerald-50 text-emerald-700 flex items-center justify-center font-bold text-xs">
+                    RL
+                  </div>
+                  <div>
+                    <span class="font-bold text-slate-900 block leading-tight">Robert Lee</span>
+                    <span class="text-[11px] text-slate-400 block">Grade B &bull; DTI 14% &bull; Term 36m</span>
+                  </div>
+                </div>
+                <div class="text-right">
+                  <span class="font-bold text-slate-900 block">$25,000</span>
+                  <span class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-emerald-50 text-emerald-600">Disetujui</span>
+                </div>
+              </div>
+
+              <div class="flex items-center justify-between text-xs">
+                <div class="flex items-center gap-3">
+                  <div class="w-8 h-8 rounded-full bg-rose-50 text-rose-600 flex items-center justify-center font-bold text-xs">
+                    EP
+                  </div>
+                  <div>
+                    <span class="font-bold text-slate-900 block leading-tight">Emma Parker</span>
+                    <span class="text-[11px] text-slate-400 block">Grade F &bull; DTI 34% &bull; Term 60m</span>
+                  </div>
+                </div>
+                <div class="text-right">
+                  <span class="font-bold text-slate-900 block">$18,000</span>
+                  <span class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-rose-50 text-rose-600">Ditolak</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Panel 3: Faktor Risiko Paling Berpengaruh (Top Risk Drivers) (XGBoost Feature Importance) -->
+          <div class="lg:col-span-3 bg-white rounded-2xl p-5 shadow-soft border border-slate-100 flex flex-col justify-between">
+            <div>
+              <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+                <h4 class="font-bold text-sm text-slate-900 flex items-center gap-2">
+                  <i data-lucide="alert-octagon" class="w-4 h-4 text-amber-500"></i>
+                  Faktor Risiko Paling Berpengaruh (Top Risk Drivers)
+                </h4>
+                <span class="text-[10px] font-semibold text-slate-400 bg-slate-50 px-2 py-0.5 rounded">SHAP Gain</span>
+              </div>
+
+              <!-- Bar Progres Faktor -->
+              <div class="space-y-3 mt-3 text-xs">
+                <div>
+                  <div class="flex justify-between text-[11px] mb-1">
+                    <span class="text-slate-600 font-semibold">1. cat__grade_A & B</span>
+                    <span class="text-slate-900 font-bold">14.2%</span>
+                  </div>
+                  <div class="w-full bg-slate-100 rounded-full h-1.5">
+                    <div class="bg-amber-500 h-1.5 rounded-full" style="width: 85%"></div>
+                  </div>
+                </div>
+
+                <div>
+                  <div class="flex justify-between text-[11px] mb-1">
+                    <span class="text-slate-600 font-semibold">2. num__int_rate</span>
+                    <span class="text-slate-900 font-bold">5.4%</span>
+                  </div>
+                  <div class="w-full bg-slate-100 rounded-full h-1.5">
+                    <div class="bg-orange-500 h-1.5 rounded-full" style="width: 55%"></div>
+                  </div>
+                </div>
+
+                <div>
+                  <div class="flex justify-between text-[11px] mb-1">
+                    <span class="text-slate-600 font-semibold">3. cat__term_ 60 months</span>
+                    <span class="text-slate-900 font-bold">4.7%</span>
+                  </div>
+                  <div class="w-full bg-slate-100 rounded-full h-1.5">
+                    <div class="bg-blue-500 h-1.5 rounded-full" style="width: 48%"></div>
+                  </div>
+                </div>
+
+                <div>
+                  <div class="flex justify-between text-[11px] mb-1">
+                    <span class="text-slate-600 font-semibold">4. num__dti</span>
+                    <span class="text-slate-900 font-bold">3.2%</span>
+                  </div>
+                  <div class="w-full bg-slate-100 rounded-full h-1.5">
+                    <div class="bg-emerald-500 h-1.5 rounded-full" style="width: 38%"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="mt-4 pt-3 border-t border-slate-100 text-[11px] text-slate-500 leading-relaxed">
+              <span class="font-bold text-slate-800">Panduan Operasional:</span> Pinjaman dengan tenor 60 bulan memiliki rasio default 1.8x lebih tinggi dibanding tenor 36 bulan.
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+
+
+      <!-- ===================================================================== -->
+      <!-- VIEW 2: ANALYTICS & EDA (DATA EXPLORATION) -->
+      <!-- ===================================================================== -->
+      <div id="view-analytics" class="view-panel hidden p-6 space-y-6">
+        <div>
+          <h2 class="text-xl font-extrabold text-slate-900">Pemahaman Data & Analisis Eksploratif (EDA)</h2>
+          <p class="text-xs text-slate-500 mt-1">Analisis mendalam terhadap 466.285 data riwayat peminjam pinjaman.</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+          <div class="bg-white rounded-2xl p-5 shadow-soft border border-slate-100">
+            <span class="text-xs font-bold text-amber-600 uppercase">1. Debt-to-Income Ratio (DTI)</span>
+            <h4 class="text-xl font-extrabold text-slate-900 mt-1">16.4% vs 19.2%</h4>
+            <p class="text-xs text-slate-500 mt-2">Nilai median DTI peminjam lancar (Good Loans) adalah 16.4%, sedangkan peminjam yang gagal bayar (Default) memiliki median DTI jauh lebih tinggi sebesar 19.2%.</p>
+          </div>
+          <div class="bg-white rounded-2xl p-5 shadow-soft border border-slate-100">
+            <span class="text-xs font-bold text-blue-600 uppercase">2. Interest Rate (int_rate)</span>
+            <h4 class="text-xl font-extrabold text-slate-900 mt-1">13.2% vs 16.8%</h4>
+            <p class="text-xs text-slate-500 mt-2">Pinjaman bermasalah rata-rata dikenakan suku bunga 16.8% dibandingkan 13.2% pada pinjaman lunas (Fully Paid) karena penerapan Risk-based Pricing.</p>
+          </div>
+          <div class="bg-white rounded-2xl p-5 shadow-soft border border-slate-100">
+            <span class="text-xs font-bold text-emerald-600 uppercase">3. Revolving Utilization (revol_util)</span>
+            <h4 class="text-xl font-extrabold text-slate-900 mt-1">54.1% vs 61.5%</h4>
+            <p class="text-xs text-slate-500 mt-2">Peminjam yang menggunakan &gt;60% batas limit kartu kredit menunjukkan tekanan likuiditas tinggi dan risiko gagal bayar yang lebih besar.</p>
+          </div>
+        </div>
+
+        <div class="bg-white rounded-2xl p-6 shadow-soft border border-slate-100">
+          <h3 class="font-bold text-sm text-slate-900 mb-3">Distribusi Tingkat Default pada Seluruh Sub-Grade (A1 hingga G5)</h3>
+          <div id="subgradeBarChart"></div>
+        </div>
+      </div>
+
+
+      <!-- ===================================================================== -->
+      <!-- VIEW 3: SIMULASI KEBIJAKAN & THRESHOLD -->
+      <!-- ===================================================================== -->
+      <div id="view-policy" class="view-panel hidden p-6 space-y-6">
+        <div>
+          <h2 class="text-xl font-extrabold text-slate-900">Simulator Kebijakan Risiko & Threshold</h2>
+          <p class="text-xs text-slate-500 mt-1">Simulasikan keputusan persetujuan kredit dan dampak portofolio dengan mengatur batas ambang (threshold cutoff).</p>
+        </div>
+
+        <!-- Slider Controller Card -->
+        <div class="bg-white rounded-2xl p-6 shadow-soft border border-slate-100">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100">
+            <div>
+              <span class="text-xs text-slate-400 font-semibold block">Batas Ambang Keputusan (Decision Threshold Cutoff):</span>
+              <div class="flex items-center gap-3 mt-1">
+                <span id="sliderDisplay" class="text-3xl font-extrabold text-slate-900 font-mono">0.55</span>
+                <span id="policyBadge" class="px-3 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-800">
+                  Kebijakan Berimbang (Rekomendasi XGBoost)
+                </span>
+              </div>
+            </div>
+
+            <!-- Presets -->
+            <div class="flex items-center gap-2">
+              <button onclick="setThresholdVal(0.45)" class="px-3 py-1.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-700 hover:bg-slate-50 transition">
+                🛡️ Konservatif (0.45)
+              </button>
+              <button onclick="setThresholdVal(0.55)" class="px-3 py-1.5 rounded-xl bg-slate-950 text-white text-xs font-bold shadow-md transition">
+                ⚖️ Berimbang (0.55)
+              </button>
+              <button onclick="setThresholdVal(0.65)" class="px-3 py-1.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-700 hover:bg-slate-50 transition">
+                🚀 Pertumbuhan Agresif (0.65)
+              </button>
+            </div>
+          </div>
+
+          <div class="mt-6 space-y-3">
+            <input 
+              type="range" 
+              id="policyRangeInput" 
+              min="0.10" 
+              max="0.80" 
+              step="0.05" 
+              value="0.55" 
+              oninput="updatePolicySimulation(this.value)"
+              class="w-full h-2.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-amber-500"
+            >
+            <div class="flex justify-between text-[11px] text-slate-400 font-semibold">
+              <span>0.10 (Sangat Selektif)</span>
+              <span>0.45 (Konservatif)</span>
+              <span>0.55 (Optimal XGBoost)</span>
+              <span>0.80 (Volume Agresif)</span>
+            </div>
+          </div>
+
+          <!-- Dynamic Output Metrics -->
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-6">
+            <div class="p-4 rounded-xl bg-slate-50 border border-slate-100 text-center">
+              <span class="text-xs text-slate-400 font-semibold block">Tingkat Persetujuan (Approval Rate)</span>
+              <span id="polAppRate" class="text-2xl font-extrabold text-blue-600 block my-1">67.8%</span>
+              <span class="text-[11px] text-slate-500 block">Dari seluruh pengajuan yang masuk</span>
+            </div>
+            <div class="p-4 rounded-xl bg-slate-50 border border-slate-100 text-center">
+              <span class="text-xs text-slate-400 font-semibold block">Bad Rate Portofolio yang Disetujui</span>
+              <span id="polBadRate" class="text-2xl font-extrabold text-emerald-600 block my-1">14.1%</span>
+              <span class="text-[11px] text-emerald-600 block">&darr; Turun dari 21.8% baseline awal</span>
+            </div>
+            <div class="p-4 rounded-xl bg-slate-50 border border-slate-100 text-center">
+              <span class="text-xs text-slate-400 font-semibold block">Kredit Macet Tercegah (Recall)</span>
+              <span id="polRecall" class="text-2xl font-extrabold text-amber-600 block my-1">56.2%</span>
+              <span class="text-[11px] text-slate-500 block">Peminjam macet berhasil disaring</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Trade-off Curve in Policy View -->
+        <div class="bg-white rounded-2xl p-6 shadow-soft border border-slate-100">
+          <h3 class="font-bold text-sm text-slate-900 mb-3">Policy Trade-off Curve (Tingkat Persetujuan (Approval Rate) vs Bad Rate vs Recall)</h3>
+          <div id="fullPolicyChart"></div>
+        </div>
+      </div>
+
+
+      <!-- ===================================================================== -->
+      <!-- VIEW 4: KALKULATOR PEMOHON BARU (Interaktif) -->
+      <!-- ===================================================================== -->
+      <div id="view-calculator" class="view-panel hidden p-6 space-y-6">
+        <div>
+          <h2 class="text-xl font-extrabold text-slate-900">Kalkulator Skor Risiko Kredit Pemohon</h2>
+          <p class="text-xs text-slate-500 mt-1">Estimasi nilai Probability of Default (PD) dan rekomendasi keputusan underwriting menggunakan pipeline model XGBoost.</p>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          <!-- Input Form -->
+          <div class="lg:col-span-7 bg-white rounded-2xl p-6 shadow-soft border border-slate-100 space-y-4">
+            <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+              <span class="text-xs font-bold text-slate-900 uppercase">Parameter Finansial Pemohon Pinjaman</span>
+              <div class="flex items-center gap-2">
+                <span class="text-xs text-slate-400">Presets:</span>
+                <select onchange="loadPresetApplicant(this.value)" class="text-xs border border-slate-200 rounded-lg px-2 py-1 bg-slate-50 font-medium">
+                  <option value="prime">Profil Prime (Risiko Rendah - Grade A)</option>
+                  <option value="medium" selected>Profil Near-Prime (Risiko Sedang - Grade C)</option>
+                  <option value="subprime">Profil Subprime (Risiko Tinggi - Grade F)</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs font-medium">
+              <div>
+                <label class="block text-slate-600 mb-1">Jumlah Pinjaman ($ Loan Amount)</label>
+                <input type="number" id="calc_loan_amnt" value="15000" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-900 font-bold">
+              </div>
+              <div>
+                <label class="block text-slate-600 mb-1">Suku Bunga (% int_rate)</label>
+                <input type="number" id="calc_int_rate" value="14.5" step="0.1" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-900 font-bold">
+              </div>
+              <div>
+                <label class="block text-slate-600 mb-1">Peringkat Pinjaman (Loan Grade)</label>
+                <select id="calc_grade" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-900 font-bold">
+                  <option value="A">Grade A (Prime / Lowest Risk)</option>
+                  <option value="B">Grade B (Good Quality)</option>
+                  <option value="C" selected>Grade C (Moderate)</option>
+                  <option value="D">Grade D (Sub-standard)</option>
+                  <option value="E">Grade E (Elevated Risk)</option>
+                  <option value="F">Grade F (High Risk)</option>
+                  <option value="G">Grade G (Extreme Risk)</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-slate-600 mb-1">Tenor Pinjaman (Term)</label>
+                <select id="calc_term" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-900 font-bold">
+                  <option value="36" selected>36 bulan (Standar)</option>
+                  <option value="60">60 bulan (Risiko Default Lebih Tinggi)</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-slate-600 mb-1">Pendapatan Tahunan ($ annual_inc)</label>
+                <input type="number" id="calc_annual_inc" value="65000" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-900 font-bold">
+              </div>
+              <div>
+                <label class="block text-slate-600 mb-1">Rasio Hutang terhadap Pendapatan (% dti)</label>
+                <input type="number" id="calc_dti" value="18.5" step="0.5" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-900 font-bold">
+              </div>
+              <div>
+                <label class="block text-slate-600 mb-1">Pemanfaatan Plafon Kredit (% revol_util)</label>
+                <input type="number" id="calc_revol_util" value="55" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-900 font-bold">
+              </div>
+              <div>
+                <label class="block text-slate-600 mb-1">Status Kepemilikan Rumah (home_ownership)</label>
+                <select id="calc_home" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-900 font-bold">
+                  <option value="MORTGAGE" selected>MORTGAGE</option>
+                  <option value="RENT">RENT</option>
+                  <option value="OWN">OWN</option>
+                </select>
+              </div>
+            </div>
+
+            <button onclick="runCalculation()" class="w-full mt-2 py-3.5 rounded-xl bg-slate-950 hover:bg-slate-800 text-white font-bold text-xs shadow-lg shadow-slate-950/20 transition flex items-center justify-center gap-2">
+              <i data-lucide="zap" class="w-4 h-4 text-amber-400"></i>
+              Hitung Skor Risiko Kredit & Keputusan
+            </button>
+          </div>
+
+          <!-- Result Card -->
+          <div class="lg:col-span-5 bg-white rounded-2xl p-6 shadow-soft border border-slate-100 flex flex-col justify-between">
+            <div>
+              <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+                <span class="text-xs font-bold text-slate-900 uppercase">Hasil Keputusan Underwriting</span>
+                <span id="calcBadge" class="px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800">
+                  APPROVED
+                </span>
+              </div>
+
+              <!-- Radial Gauge -->
+              <div class="flex flex-col items-center mt-4">
+                <div id="calcRadialGauge" class="w-full max-w-[260px]"></div>
+                <div class="text-center -mt-6">
+                  <span class="text-xs text-slate-400 font-semibold block uppercase tracking-wider">Probability of Default (PD)</span>
+                  <span id="calcProbVal" class="text-3xl font-extrabold text-slate-900 mt-0.5 block">22.4%</span>
+                </div>
+              </div>
+
+              <div class="mt-6 space-y-2.5 text-xs">
+                <div class="flex justify-between p-2.5 bg-slate-50 rounded-xl font-medium">
+                  <span class="text-slate-500">Estimasi Skor Kredit FICO:</span>
+                  <span id="calcScoreVal" class="font-bold text-slate-900 font-mono">695 / 850</span>
+                </div>
+                <div class="flex justify-between p-2.5 bg-slate-50 rounded-xl font-medium">
+                  <span class="text-slate-500">Klasifikasi Tingkat Risiko (Risk Tier):</span>
+                  <span id="calcTierVal" class="font-bold text-amber-600">Near-Prime (Moderate)</span>
+                </div>
+                <div class="p-3 bg-slate-50 rounded-xl text-xs font-medium text-slate-700">
+                  <span class="text-slate-400 block mb-0.5 text-[11px]">Rekomendasi Tindakan Kredit:</span>
+                  <p id="calcRecVal" class="leading-relaxed font-semibold">Persetujuan bersyarat: batasi tenor pinjaman maksimal hingga 36 bulan.</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="mt-4 pt-3 border-t border-slate-100 text-[11px] text-slate-400">
+              Output terkalibrasi dari pipeline model XGBoost v1.0.
+            </div>
+          </div>
+        </div>
+      </div>
+
+
+      <!-- ===================================================================== -->
+      <!-- VIEW 5: MODEL & SHAP EXPLAINABILITY -->
+      <!-- ===================================================================== -->
+      <div id="view-explainability" class="view-panel hidden p-6 space-y-6">
+        <div>
+          <h2 class="text-xl font-extrabold text-slate-900">Benchmark Model & Penjelasan Fitur (SHAP)</h2>
+          <p class="text-xs text-slate-500 mt-1">Evaluasi perbandingan algoritma machine learning berdasarkan metrik CRISP-DM dan bobot kepentingan fitur global SHAP.</p>
+        </div>
+
+        <!-- Benchmark Table -->
+        <div class="bg-white rounded-2xl p-6 shadow-soft border border-slate-100">
+          <h3 class="font-bold text-sm text-slate-900 mb-3">Tabel Performa Benchmark Model (Subset Terstratifikasi 120 Ribu Baris)</h3>
+          <div class="overflow-x-auto">
+            <table class="w-full text-xs text-left">
+              <thead class="text-slate-400 font-semibold text-[11px] border-b border-slate-100">
+                <tr>
+                  <th class="pb-2.5">Algorithm</th>
+                  <th class="pb-2.5 text-center">ROC-AUC</th>
+                  <th class="pb-2.5 text-center">PR-AUC</th>
+                  <th class="pb-2.5 text-center">Precision (Bad)</th>
+                  <th class="pb-2.5 text-center">Recall (Bad)</th>
+                  <th class="pb-2.5 text-center">F1-Score</th>
+                  <th class="pb-2.5 text-right">Production Status</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100 font-medium">
+                <tr class="bg-amber-50/40">
+                  <td class="py-3 font-bold text-slate-900 flex items-center gap-2">
+                    <span class="w-2 h-2 rounded-full bg-amber-500"></span>
+                    XGBoost Classifier
+                  </td>
+                  <td class="py-3 text-center font-bold text-amber-600">0.7145</td>
+                  <td class="py-3 text-center font-bold text-amber-600">0.4058</td>
+                  <td class="py-3 text-center">0.368</td>
+                  <td class="py-3 text-center font-bold text-emerald-600">0.684</td>
+                  <td class="py-3 text-center font-bold text-emerald-600">0.479</td>
+                  <td class="py-3 text-right"><span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-200 text-amber-900">SELECTED (PROD)</span></td>
+                </tr>
+                <tr>
+                  <td class="py-3 font-semibold text-slate-700">LightGBM Classifier</td>
+                  <td class="py-3 text-center font-semibold text-slate-900">0.7165</td>
+                  <td class="py-3 text-center font-semibold text-slate-900">0.4080</td>
+                  <td class="py-3 text-center">0.371</td>
+                  <td class="py-3 text-center">0.672</td>
+                  <td class="py-3 text-center">0.478</td>
+                  <td class="py-3 text-right"><span class="px-2 py-0.5 rounded-full text-[10px] font-medium bg-slate-100 text-slate-600">Benchmark Candidate</span></td>
+                </tr>
+                <tr>
+                  <td class="py-3 font-semibold text-slate-700">Logistic Regression (Baseline)</td>
+                  <td class="py-3 text-center">0.7075</td>
+                  <td class="py-3 text-center">0.3940</td>
+                  <td class="py-3 text-center">0.353</td>
+                  <td class="py-3 text-center">0.613</td>
+                  <td class="py-3 text-center">0.448</td>
+                  <td class="py-3 text-right"><span class="px-2 py-0.5 rounded-full text-[10px] font-medium bg-slate-100 text-slate-600">Baseline</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Global Feature Importance -->
+        <div class="bg-white rounded-2xl p-6 shadow-soft border border-slate-100">
+          <h3 class="font-bold text-sm text-slate-900 mb-2">Kepentingan Fitur Global (Bobot Pengaruh Fitur Model XGBoost)</h3>
+          <div id="fullFeatureChart"></div>
+        </div>
+      </div>
+
+
+  <!-- JAVASCRIPT LOGIC & APEXCHARTS INITIALIZATION -->
+  <script>
+    // Inisialisasi Ikon Lucide
+    lucide.createIcons();
+
+    // =========================================================================
+    // NAVIGASI SWITCH VIEW (SAMA SEPERTI QUANTRO)
+    // =========================================================================
+    function switchView(viewName) {
+      document.querySelectorAll('.view-panel').forEach(p => p.classList.add('hidden'));
+      document.querySelectorAll('.nav-item').forEach(b => {
+        b.className = 'nav-item w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-slate-400 hover:text-slate-200 hover:bg-brand-sidehover transition';
+      });
+
+      const activeView = document.getElementById('view-' + viewName);
+      const activeBtn = document.getElementById('nav-btn-' + viewName);
+
+      if (activeView) activeView.classList.remove('hidden');
+      if (activeBtn) {
+        activeBtn.className = 'nav-item w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl bg-amber-500/15 text-amber-400 font-semibold border border-amber-500/25 transition';
+      }
+      window.dispatchEvent(new Event('resize'));
+    }
+
+    // =========================================================================
+    // SPARKLINE CHARTS PADA 4 KARTU METRIK UTAMA
+    // =========================================================================
+    function createSparkline(elementId, color, data) {
+      const options = {
+        series: [{ data: data }],
+        chart: {
+          type: 'area',
+          height: 48,
+          sparkline: { enabled: true }
+        },
+        stroke: { curve: 'smooth', width: 2 },
+        fill: {
+          type: 'gradient',
+          gradient: {
+            shadeIntensity: 1,
+            opacityFrom: 0.45,
+            opacityTo: 0.05,
+            stops: [0, 90, 100]
+          }
+        },
+        colors: [color],
+        tooltip: { enabled: false }
+      };
+      const chart = new ApexCharts(document.querySelector(elementId), options);
+      chart.render();
+    }
+
+    createSparkline('#sparkline1', '#f59e0b', [20, 24, 28, 25, 32, 38, 42, 45, 52]);
+    createSparkline('#sparkline2', '#3b82f6', [35, 32, 30, 28, 26, 24, 22, 21.8]);
+    createSparkline('#sparkline3', '#f97316', [50, 52, 58, 62, 65, 66, 67.8]);
+    createSparkline('#sparkline4', '#10b981', [40, 44, 48, 52, 55, 58, 56.2]);
+
+
+    // =========================================================================
+    // MAIN AREA CHART (TREN SUKU BUNGA & RISIKO PER GRADE)
+    // =========================================================================
+    let currentTrend = 'bunga';
+    const trendDataBunga = [6.1, 8.4, 12.8, 16.5, 22.4, 30.5, 38.6, 44.2, 48.9];
+    const trendDataDti = [14.2, 15.1, 16.5, 17.8, 19.4, 20.8, 22.5, 23.9, 25.1];
+
+    const areaOptions = {
+      series: [{
+        name: 'Default Rate (%)',
+        data: trendDataBunga
+      }],
+      chart: {
+        type: 'area',
+        height: 290,
+        toolbar: { show: false }
+      },
+      colors: ['#f59e0b'],
+      stroke: { curve: 'smooth', width: 3 },
+      fill: {
+        type: 'gradient',
+        gradient: {
+          shadeIntensity: 1,
+          opacityFrom: 0.45,
+          opacityTo: 0.05,
+          stops: [0, 90, 100]
+        }
+      },
+      markers: {
+        size: [0],
+        hover: { size: 6 }
+      },
+      annotations: {
+        points: [{
+          x: 'Grade G',
+          y: 48.9,
+          marker: { size: 6, fillColor: '#f59e0b', strokeColor: '#ffffff', strokeWidth: 2 },
+          label: {
+            borderColor: '#0f172a',
+            style: { color: '#ffffff', background: '#0f172a', fontSize: '11px', fontWeight: 700 },
+            text: 'Peak Default: 48.9%'
+          }
+        }]
+      },
+      xaxis: {
+        categories: ['Grade A1', 'Grade A5', 'Grade B', 'Grade C', 'Grade D', 'Grade E', 'Grade F', 'Grade G1', 'Grade G5'],
+        labels: { style: { colors: '#94a3b8', fontSize: '11px', fontWeight: 500 } },
+        axisBorder: { show: false },
+        axisTicks: { show: false }
+      },
+      yaxis: {
+        min: 0,
+        max: 55,
+        labels: {
+          formatter: (v) => v + '%',
+          style: { colors: '#94a3b8', fontSize: '11px' }
+        }
+      },
+      grid: { borderColor: '#f1f5f9', strokeDashArray: 4 }
+    };
+    const overviewAreaChart = new ApexCharts(document.querySelector("#overviewAreaChart"), areaOptions);
+    overviewAreaChart.render();
+
+    function toggleTrend(type) {
+      const btnBunga = document.getElementById('btnTrendBunga');
+      const btnDti = document.getElementById('btnTrendDti');
+
+      if (type === 'bunga') {
+        btnBunga.className = "px-3 py-1 rounded-lg bg-slate-900 text-white shadow-sm transition";
+        btnDti.className = "px-3 py-1 rounded-lg text-slate-600 hover:text-slate-900 transition";
+        overviewAreaChart.updateSeries([{ name: 'Default Rate (%)', data: trendDataBunga }]);
+      } else {
+        btnDti.className = "px-3 py-1 rounded-lg bg-slate-900 text-white shadow-sm transition";
+        btnBunga.className = "px-3 py-1 rounded-lg text-slate-600 hover:text-slate-900 transition";
+        overviewAreaChart.updateSeries([{ name: 'DTI Ratio (%)', data: trendDataDti }]);
+      }
+    }
+
+
+    // =========================================================================
+    // CATEGORY DONUT CHART (Persis Screenshot)
+    // =========================================================================
+    const donutOptions = {
+      series: [224226, 184739, 42475, 14845],
+      labels: ['Current (Active)', 'Fully Paid', 'Charged Off', 'Late / Default'],
+      chart: {
+        type: 'donut',
+        height: 220
+      },
+      colors: ['#f59e0b', '#10b981', '#0f172a', '#f43f5e'],
+      stroke: { width: 3, colors: ['#ffffff'] },
+      dataLabels: { enabled: false },
+      legend: { show: false },
+      plotOptions: {
+        pie: {
+          donut: {
+            size: '74%',
+            labels: {
+              show: true,
+              name: { color: '#64748b', fontSize: '10px' },
+              value: {
+                color: '#0f172a',
+                fontSize: '18px',
+                fontWeight: 800,
+                formatter: () => '466K'
+              },
+              total: {
+                show: true,
+                label: 'Total Loans',
+                color: '#64748b',
+                fontSize: '10px',
+                formatter: () => '466,285'
+              }
+            }
+          }
+        }
+      }
+    };
+    const categoryDonutChart = new ApexCharts(document.querySelector("#categoryDonutChart"), donutOptions);
+    categoryDonutChart.render();
+
+
+    // =========================================================================
+    // SUB-GRADE BAR CHART IN ANALYTICS
+    // =========================================================================
+    const subgradeOptions = {
+      series: [{
+        name: 'Default Rate (%)',
+        data: [4.2, 5.5, 7.1, 9.8, 12.3, 15.6, 19.8, 23.4, 27.8, 31.9, 36.4, 41.2, 45.8, 51.2]
+      }],
+      chart: { type: 'bar', height: 260, toolbar: { show: false } },
+      plotOptions: { bar: { borderRadius: 4, columnWidth: '55%', distributed: true } },
+      colors: ['#10b981', '#10b981', '#34d399', '#6ee7b7', '#f59e0b', '#f59e0b', '#fbbf24', '#fb923c', '#f97316', '#ea580c', '#ef4444', '#dc2626', '#b91c1c', '#991b1b'],
+      legend: { show: false },
+      xaxis: {
+        categories: ['A1', 'A3', 'A5', 'B2', 'B4', 'C1', 'C3', 'C5', 'D2', 'D4', 'E2', 'E4', 'F2', 'G2'],
+        labels: { style: { colors: '#94a3b8', fontSize: '11px' } }
+      },
+      yaxis: { labels: { formatter: (v) => v + '%' } },
+      grid: { borderColor: '#f1f5f9' }
+    };
+    const subgradeBarChart = new ApexCharts(document.querySelector("#subgradeBarChart"), subgradeOptions);
+    subgradeBarChart.render();
+
+
+    // =========================================================================
+    // POLICY TRADE-OFF CURVE
+    // =========================================================================
+    const policyCurveData = [
+      { t: 0.10, app: 1.1, bad: 1.6, rec: 99.9 },
+      { t: 0.20, app: 8.5, bad: 4.9, rec: 98.2 },
+      { t: 0.30, app: 23.5, bad: 8.4, rec: 91.1 },
+      { t: 0.45, app: 50.4, bad: 11.4, rec: 73.8 },
+      { t: 0.55, app: 67.8, bad: 14.1, rec: 56.2 },
+      { t: 0.65, app: 78.5, bad: 16.5, rec: 41.2 },
+      { t: 0.75, app: 88.0, bad: 18.7, rec: 26.5 }
+    ];
+
+    const fullPolicyOptions = {
+      series: [
+        { name: 'Tingkat Persetujuan (Approval Rate) (%)', data: policyCurveData.map(p => [p.t, p.app]) },
+        { name: 'Bad Rate in Approved Portfolio (%)', data: policyCurveData.map(p => [p.t, p.bad]) },
+        { name: 'Bad Loans Caught / Recall (%)', data: policyCurveData.map(p => [p.t, p.rec]) }
+      ],
+      chart: { type: 'line', height: 260, toolbar: { show: false } },
+      colors: ['#2563eb', '#dc2626', '#d97706'],
+      stroke: { curve: 'smooth', width: [3, 3, 2.5], dashArray: [0, 0, 4] },
+      markers: { size: 4 },
+      grid: { borderColor: '#f1f5f9' },
+      xaxis: { type: 'numeric', labels: { formatter: (v) => v.toFixed(2) } },
+      yaxis: { min: 0, max: 100, labels: { formatter: (v) => v.toFixed(0) + '%' } }
+    };
+    const fullPolicyChart = new ApexCharts(document.querySelector("#fullPolicyChart"), fullPolicyOptions);
+    fullPolicyChart.render();
+
+    function updatePolicySimulation(val) {
+      const t = parseFloat(val);
+      document.getElementById('sliderDisplay').innerText = t.toFixed(2);
+      
+      let app = 67.8, bad = 14.1, rec = 56.2;
+      for (let i = 0; i < policyCurveData.length - 1; i++) {
+        if (t >= policyCurveData[i].t && t <= policyCurveData[i+1].t) {
+          const r = (t - policyCurveData[i].t) / (policyCurveData[i+1].t - policyCurveData[i].t);
+          app = policyCurveData[i].app + r * (policyCurveData[i+1].app - policyCurveData[i].app);
+          bad = policyCurveData[i].bad + r * (policyCurveData[i+1].bad - policyCurveData[i].bad);
+          rec = policyCurveData[i].rec + r * (policyCurveData[i+1].rec - policyCurveData[i].rec);
+          break;
+        }
+      }
+
+      document.getElementById('polAppRate').innerText = app.toFixed(1) + '%';
+      document.getElementById('polBadRate').innerText = bad.toFixed(1) + '%';
+      document.getElementById('polRecall').innerText = rec.toFixed(1) + '%';
+
+      const badge = document.getElementById('policyBadge');
+      if (t < 0.48) {
+        badge.innerText = 'Kebijakan Konservatif (Mitigasi Risiko)';
+        badge.className = 'px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800';
+      } else if (t <= 0.60) {
+        badge.innerText = 'Kebijakan Berimbang (Rekomendasi XGBoost)';
+        badge.className = 'px-3 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-800';
+      } else {
+        badge.innerText = 'Kebijakan Pertumbuhan Agresif (Maksimalkan Volume)';
+        badge.className = 'px-3 py-1 rounded-full text-xs font-bold bg-blue-100 text-blue-800';
+      }
+    }
+
+    function setThresholdVal(v) {
+      document.getElementById('policyRangeInput').value = v;
+      updatePolicySimulation(v);
+    }
+
+
+    // =========================================================================
+    // APPLICANT CALCULATOR RADIAL GAUGE & LOGIC
+    // =========================================================================
+    const calcRadialOptions = {
+      series: [22],
+      chart: { height: 210, type: 'radialBar' },
+      plotOptions: {
+        radialBar: {
+          startAngle: -135,
+          endAngle: 135,
+          hollow: { size: '68%' },
+          track: { background: '#f1f5f9', strokeWidth: '100%' },
+          dataLabels: {
+            show: true,
+            name: { show: false },
+            value: {
+              offsetY: 6,
+              color: '#0f172a',
+              fontSize: '24px',
+              fontWeight: 800,
+              formatter: (v) => v + '%'
+            }
+          }
+        }
+      },
+      colors: ['#10b981'],
+      stroke: { lineCap: 'round' }
+    };
+    const calcRadialGauge = new ApexCharts(document.querySelector("#calcRadialGauge"), calcRadialOptions);
+    calcRadialGauge.render();
+
+    const gWeights = { 'A': -1.2, 'B': -0.6, 'C': 0.1, 'D': 0.7, 'E': 1.2, 'F': 1.6, 'G': 2.0 };
+    const tWeights = { '36': -0.3, '60': 0.45 };
+    const hWeights = { 'MORTGAGE': -0.15, 'OWN': -0.1, 'RENT': 0.15 };
+
+    function runCalculation() {
+      const loan = parseFloat(document.getElementById('calc_loan_amnt').value) || 15000;
+      const rate = parseFloat(document.getElementById('calc_int_rate').value) || 14.5;
+      const grade = document.getElementById('calc_grade').value;
+      const term = document.getElementById('calc_term').value;
+      const inc = parseFloat(document.getElementById('calc_annual_inc').value) || 65000;
+      const dti = parseFloat(document.getElementById('calc_dti').value) || 18.5;
+      const util = parseFloat(document.getElementById('calc_revol_util').value) || 55;
+      const home = document.getElementById('calc_home').value;
+
+      let z = -1.6;
+      z += gWeights[grade] || 0;
+      z += tWeights[term] || 0;
+      z += hWeights[home] || 0;
+      z += (rate - 13.5) * 0.12;
+      z += (dti - 17.0) * 0.035;
+      z += (util - 50.0) * 0.012;
+      z -= (inc - 65000) / 100000 * 0.45;
+      z += (loan - 15000) / 50000 * 0.3;
+
+      let prob = 1 / (1 + Math.exp(-z));
+      prob = Math.min(Math.max(prob, 0.03), 0.95);
+      const probPct = Math.round(prob * 100);
+      const fico = Math.round(850 - (prob * 450));
+
+      calcRadialGauge.updateSeries([probPct]);
+
+      let color = '#10b981';
+      let dec = 'APPROVED';
+      let badgeCls = 'bg-emerald-100 text-emerald-800';
+      let tier = 'Prime (Risiko Rendah)';
+      let rec = 'Persetujuan otomatis dengan tingkat suku bunga standar dan limit plafon penuh.';
+
+      if (prob >= 0.50) {
+        color = '#ef4444';
+        dec = 'REJECTED';
+        badgeCls = 'bg-rose-100 text-rose-800';
+        tier = 'Subprime (Risiko Gagal Bayar Tinggi)';
+        rec = 'Melebihi batas toleransi risiko portofolio. Pengajuan ditolak atau wajibkan penjamin/agunan tambahan.';
+      } else if (prob >= 0.35) {
+        color = '#f59e0b';
+        dec = 'MANUAL REVIEW (BERSYARAT)';
+        badgeCls = 'bg-amber-100 text-amber-800';
+        tier = 'Near-Prime (Risiko Sedang)';
+        rec = 'Persetujuan bersyarat: batasi tenor maksimal hingga 36 bulan dan lakukan verifikasi slip gaji / bukti penghasilan.';
+      }
+
+      calcRadialGauge.updateOptions({ colors: [color] });
+
+      document.getElementById('calcProbVal').innerText = (prob * 100).toFixed(1) + '%';
+      document.getElementById('calcScoreVal').innerText = `${fico} / 850`;
+      document.getElementById('calcTierVal').innerText = tier;
+      document.getElementById('calcRecVal').innerText = rec;
+
+      const badge = document.getElementById('calcBadge');
+      badge.className = `px-3 py-1 rounded-full text-xs font-bold ${badgeCls}`;
+      badge.innerText = dec;
+    }
+
+    function loadPresetApplicant(t) {
+      if (t === 'prime') {
+        document.getElementById('calc_loan_amnt').value = 10000;
+        document.getElementById('calc_int_rate').value = 7.5;
+        document.getElementById('calc_grade').value = 'A';
+        document.getElementById('calc_term').value = '36';
+        document.getElementById('calc_annual_inc').value = 95000;
+        document.getElementById('calc_dti').value = 11.2;
+        document.getElementById('calc_revol_util').value = 24;
+        document.getElementById('calc_home').value = 'MORTGAGE';
+      } else if (t === 'medium') {
+        document.getElementById('calc_loan_amnt').value = 15000;
+        document.getElementById('calc_int_rate').value = 14.5;
+        document.getElementById('calc_grade').value = 'C';
+        document.getElementById('calc_term').value = '36';
+        document.getElementById('calc_annual_inc').value = 65000;
+        document.getElementById('calc_dti').value = 18.5;
+        document.getElementById('calc_revol_util').value = 55;
+        document.getElementById('calc_home').value = 'RENT';
+      } else if (t === 'subprime') {
+        document.getElementById('calc_loan_amnt').value = 28000;
+        document.getElementById('calc_int_rate').value = 22.8;
+        document.getElementById('calc_grade').value = 'F';
+        document.getElementById('calc_term').value = '60';
+        document.getElementById('calc_annual_inc').value = 42000;
+        document.getElementById('calc_dti').value = 32.4;
+        document.getElementById('calc_revol_util').value = 89;
+        document.getElementById('calc_home').value = 'RENT';
+      }
+      runCalculation();
+    }
+    runCalculation();
+
+
+    // =========================================================================
+    // FEATURE IMPORTANCE HORIZONTAL BAR IN EXPLAINABILITY
+    // =========================================================================
+    const fullFeatureOptions = {
+      series: [{
+        name: 'Importance (%)',
+        data: [11.43, 5.39, 4.74, 3.24, 2.76, 2.03, 1.93, 0.91, 0.80, 0.71, 0.69]
+      }],
+      chart: { type: 'bar', height: 280, toolbar: { show: false } },
+      plotOptions: { bar: { horizontal: true, borderRadius: 5, barHeight: '60%' } },
+      colors: ['#f59e0b'],
+      dataLabels: { enabled: true, formatter: (v) => v + '%' },
+      xaxis: {
+        categories: [
+          'cat__grade_A',
+          'num__int_rate',
+          'cat__term_ 60 months',
+          'cat__term_ 36 months',
+          'cat__grade_B',
+          'cat__grade_D',
+          'cat__grade_C',
+          'num__dti',
+          'num__annual_inc',
+          'cat__verification_status',
+          'num__tot_cur_bal'
+        ]
+      },
+      grid: { borderColor: '#f1f5f9' }
+    };
+    const fullFeatureChart = new ApexCharts(document.querySelector("#fullFeatureChart"), fullFeatureOptions);
+    fullFeatureChart.render();
+
+  </script>
+</body>
+</html>

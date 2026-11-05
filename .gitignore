@@ -1,0 +1,15 @@
+# Python & Environments
+.venv/
+venv/
+__pycache__/
+*.pyc
+
+# Dataset besar (jangan di-push ke GitHub/Vercel)
+*.csv
+loan_data_2007_2014.csv
+
+# Backup & System
+*.bak
+.DS_Store
+.vercel/
+

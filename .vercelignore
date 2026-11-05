@@ -1,0 +1,9 @@
+# Abaikan file data besar dan virtual environments agar deploy cepat dan tidak melebihi kuota Vercel
+loan_data_2007_2014.csv
+*.csv
+.venv/
+venv/
+*.bak
+.DS_Store
+.git/
+
