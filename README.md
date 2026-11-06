@@ -1,5 +1,7 @@
 # Credit Risk Prediction
 
+https://credit-risk-prediction-analyst.vercel.app/
+
 An end-to-end Machine Learning project focused on predicting credit risk by identifying borrowers with a higher probability of loan default. This project covers the complete machine learning workflow, from data exploration and preprocessing to model development, evaluation, explainability, and interactive dashboard visualization.
 
 ## Project Overview
